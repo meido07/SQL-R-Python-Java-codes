@@ -1,0 +1,106 @@
+USE [reporting]
+GO
+
+/****** Object:  UserDefinedFunction [dbo].[DM_080_Country]    Script Date: 1/4/2019 4:01:20 PM ******/
+SET ANSI_NULLS ON
+GO
+
+SET QUOTED_IDENTIFIER ON
+GO
+
+
+  
+
+-- =============================================
+-- Author:		  Mohamed Abdalla
+-- Create date:   8th March 2016
+-- =============================================
+CREATE FUNCTION [dbo].[DM_080_Country]
+(@Country varchar(25)
+
+)
+RETURNS TABLE 
+AS
+RETURN 
+(
+
+
+select convert(char(8),getdate(),112) as RunDate, p.country, isnull(p.Total,0) as Total, isnull(q.cnt_Alumni,0) as Alumni, isnull(s.cnt_Parent,0) as Parent,  isnull(t.cnt_Friend,0) as Friend, 
+isnull(u.cnt_Faculty_Staff,0) as Faculty_Staff, isnull(v.cnt_Student,0) as Student
+ from 
+
+
+
+(--Total count
+
+select A.country as Country, count(distinct(E.id_number)) as Total from thankyou.entity E
+inner join xrpt_address A on A.id_number = E.id_number
+where  isnull(rtrim(a.country),space(0)) <> space(0) and e.record_status_code = 'A' and  a.addr_status_code = 'A'  
+and e.record_type_code in ('AL', 'PA', 'FR', 'FS','SS')  and A.addr_pref_ind = 'Y'
+group by A.country) p
+
+--(--Total count
+--
+--select A.country as Country, count(A.id_number) as Total from xrpt_address A
+--where isnull(rtrim(a.country),space(0)) <> space(0)  and  a.addr_status_code = 'A'  and A.addr_pref_ind = 'Y' group by A.country) p
+
+
+left join 
+(--Alumni
+
+select A.country as Country, count(distinct(E.id_number)) as cnt_Alumni from thankyou.entity E
+inner join xrpt_address A on A.id_number = E.id_number
+where  isnull(rtrim(a.country),space(0)) <> space(0) and e.record_status_code = 'A' and  a.addr_status_code = 'A'  
+and e.record_type_code = 'AL' and A.addr_pref_ind = 'Y'
+group by A.country) q on p.country = q.country
+
+
+left join 
+(--Parent
+select A.country as Country, count(distinct(E.id_number)) as cnt_Parent from thankyou.entity E
+inner join xrpt_address A on A.id_number = E.id_number
+where  isnull(rtrim(a.country),space(0)) <> space(0) and e.record_status_code = 'A' and  a.addr_status_code = 'A'  
+and e.record_type_code = 'PA' and A.addr_pref_ind = 'Y'
+group by A.country) s on q.country = s.country
+
+
+
+
+left join 
+
+(--Friend
+
+select A.country as Country, count(distinct(E.id_number)) as cnt_Friend from thankyou.entity E
+inner join xrpt_address A on A.id_number = E.id_number
+where  isnull(rtrim(a.country),space(0)) <> space(0) and e.record_status_code = 'A' and  a.addr_status_code = 'A'  
+and e.record_type_code = 'FR' and A.addr_pref_ind = 'Y'
+group by A.country) t on q.country = t.country
+
+
+
+left join
+(--Faculty_Staff
+
+select A.country as Country, count(distinct(E.id_number)) as cnt_Faculty_Staff from thankyou.entity E
+inner join xrpt_address A on A.id_number = E.id_number
+where  isnull(rtrim(a.country),space(0)) <> space(0) and e.record_status_code = 'A' and  a.addr_status_code = 'A'  
+and e.record_type_code = 'FS' and A.addr_pref_ind = 'Y'
+group by A.country) u on q.country = u.country
+
+
+
+left join
+(--Student
+
+select A.country as Country, count(distinct(E.id_number)) as cnt_Student from thankyou.entity E
+inner join xrpt_address A on A.id_number = E.id_number
+where  isnull(rtrim(a.country),space(0)) <> space(0) and e.record_status_code = 'A' and  a.addr_status_code = 'A'  
+and e.record_type_code = 'SS' and A.addr_pref_ind = 'Y'
+group by A.country) v  on q.country = v.country
+where @Country = 'Cntry'
+)
+
+
+GO
+
+
